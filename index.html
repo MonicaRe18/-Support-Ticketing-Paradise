@@ -17,7 +17,7 @@
         
         @keyframes bounce-slow {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-8px); }
         }
         .animate-bounce-slow { animation: bounce-slow 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
         
@@ -30,18 +30,35 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+
+        /* SVG Animations */
+        @keyframes orbit {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+        .orbit-slow { animation: orbit 20s linear infinite; }
+        .orbit-medium { animation: orbit 12s linear infinite; }
+        .orbit-fast { animation: orbit 8s linear infinite; }
+        .pulse { animation: pulse-glow 4s ease-in-out infinite; }
     </style>
 
     <script>
-        // ==========================================
-        // الهوية البصرية والترجمات ومسارات الصور
-        // ==========================================
+        // ============================================================
+        // CONFIGURATION: سهولة التحكم في الصور والهوية من هنا
+        // ============================================================
         const CONFIG = {
             brand: {
                 name: "Paradise AI Solutions",
-                logoUrl: "img\ParadiseLogo.png", 
-                emptyStateImg: "{F0B90593-E069-4F67-906F-BC0F4DCBC708}.png",
-                heroIllustration: "image_6f8de8.png", // مسار صورة الهيرو التوضيحية
+                logoUrl: "image_7076ab.png", // رابط اللوجو الرئيسي
+                emptyStateImg: "{F0B90593-E069-4F67-906F-BC0F4DCBC708}.png", // صورة حاجز الصيانة
+                // heroIllustration تم استبدالها بـ SVG تفاعلي داخل الكود
             }
         };
 
@@ -53,7 +70,7 @@
                 myTickets: "سجل العمليات",
                 track: "تتبع المسار",
                 openTicket: "فتح تذكرة دعم",
-                heroTitle: "استقراركم التقني     ..            صمام أمان لاستمرارية أعمالكم",
+                heroTitle: "استقراركم التقني.. صمام أمان لاستمرارية أعمالكم",
                 heroDesc: "نجمع بين الابتكار الهندسي وذكاء Paradise لضمان بيئة عمل مستقرة تدفع بطموحاتكم نحو المستقبل.",
                 viewMyOrders: "استعراض سجلاتي",
                 quickAccess: "النفاذ السريع للسجلات",
@@ -68,7 +85,7 @@
                 newTicketTitle: "طلب رعاية فنية متخصصة",
                 step1: "هوية العميل",
                 step2: "تشخيص الحالة",
-                step3: "الوثائق الداعمة",
+                step3: "المرفقات",
                 subject: "موجز الطلب",
                 priority: "الأولوية التشغيلية",
                 module: "الموديول التقني",
@@ -91,7 +108,7 @@
                 details: "تحليل الحالة",
                 chat: "سجل التواصل",
                 addComment: "إضافة تحديث...",
-                ticketNotFound: "عذراً، الرقم المرجعي غير موجود.",
+                ticketNotFound: "الرقم المرجعي غير صحيح.",
                 dataRetrieved: "تم التحقق بنجاح",
                 noTicketsTitle: "بيئة العمل مستقرة تماماً",
                 noTicketsDesc: "لا توجد أي تذاكر دعم نشطة مرتبطة بهذا البريد حالياً. أنظمتكم تعمل بكفاءة Paradise الكاملة.",
@@ -113,7 +130,7 @@
                 quickAccess: "Quick Records Access",
                 accessDesc: "Please enter your authorized email to access support details and technical reports.",
                 email: "Authorized Email",
-                emailNote: "This is the official organization email; all status updates and technical solutions will be sent here.",
+                emailNote: "This email is the official communication channel for the organization; all status updates and technical solutions will be sent here.",
                 phone: "Direct Contact Number (11 digits)",
                 phonePlaceholder: "01X XXXX XXXX",
                 projectName: "Project / Entity Name",
@@ -227,7 +244,8 @@
                 },
 
                 validatePhone(phone) {
-                    return phone.replace(/\D/g, '').length === 11;
+                    const clean = phone.replace(/\D/g, '');
+                    return clean.length === 11;
                 },
 
                 validateStep(step) {
@@ -296,7 +314,7 @@
                 },
 
                 handleTrackSearch() {
-                    const found = this.tickets.find(t => t.id === this.searchId.trim());
+                    const found = this.tickets.find(t => t.id === this.searchId.trim().toUpperCase());
                     if (found) {
                         this.trackedTicket = found;
                     } else {
@@ -334,29 +352,35 @@
                     if (stepId === 'In Progress') return ['In Progress', 'Resolved', 'Closed'].includes(currentStatus);
                     if (stepId === 'Resolved') return ['Resolved', 'Closed'].includes(currentStatus);
                     return false;
+                },
+
+                handleFiles(e) {
+                    const files = Array.from(e.target.files);
+                    this.newTicket.attachments.push(...files.map(f => ({ name: f.name })));
+                    this.updateIcons();
                 }
             }
         }
     </script>
-    <!-- Alpine.js (Loaded after scripts for safety) -->
+    <!-- Alpine.js (Script after function for safety) -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-[#F8FAFC] text-[#0F172A] selection-emerald" x-data="supportPortal()" x-init="init()">
 
-    <!-- Premium Navbar -->
-    <nav class="bg-white/80 backdrop-blur-2xl border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-6xl mx-auto px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
+    <!-- Professional Navbar (Reduced Height) -->
+    <nav class="bg-white/80 backdrop-blur-2xl border-b border-slate-100 sticky top-0 z-50 shadow-sm h-16 flex items-center">
+        <div class="max-w-6xl mx-auto px-6 w-full lg:px-8">
+            <div class="flex justify-between items-center">
                 <!-- Logo -->
-                <div class="flex items-center gap-3 cursor-pointer group" @click="view = 'home'">
+                <div class="flex items-center gap-3 cursor-pointer group" @click="view = 'home'; errors = {}">
                     <img :src="CONFIG.brand.logoUrl" :alt="CONFIG.brand.name" class="h-8 w-auto transition-transform group-hover:scale-105">
                     <div class="hidden sm:block text-start" :class="lang === 'ar' ? 'text-right' : 'text-left'">
-                        <h1 class="text-base font-black text-[#0F172A] leading-tight tracking-tight" x-text="t().portalName"></h1>
-                        <p class="text-[8px] text-sky-600 font-bold uppercase tracking-[1px]" x-text="t().portalSub"></p>
+                        <h1 class="text-base font-black text-[#0F172A] leading-none tracking-tight mb-0.5" x-text="t().portalName"></h1>
+                        <p class="text-[8px] text-sky-600 font-bold uppercase tracking-wider leading-none" x-text="t().portalSub"></p>
                     </div>
                 </div>
                 
-                <div class="hidden lg:flex items-center gap-8">
+                <div class="hidden lg:flex items-center gap-6">
                     <template x-for="item in navItems" :key="item.id">
                         <button @click="view = item.id; errors = {}" 
                                 class="text-xs font-bold transition-all relative py-1"
@@ -367,14 +391,14 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button @click="toggleLang()" class="p-2 bg-slate-50 rounded-lg text-slate-500 hover:bg-slate-100 border border-slate-100 flex items-center gap-2">
+                    <button @click="toggleLang()" class="p-1.5 bg-slate-50 rounded-lg text-slate-500 hover:bg-slate-100 border border-slate-100 flex items-center gap-2">
                         <i data-lucide="languages" class="w-3.5 h-3.5"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest" x-text="lang === 'ar' ? 'EN' : 'AR'"></span>
+                        <span class="text-[10px] font-black uppercase" x-text="lang === 'ar' ? 'EN' : 'AR'"></span>
                     </button>
                     <template x-if="isAuthenticated">
-                        <button @click="logout()" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                        <button @click="logout()" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                     </template>
-                    <button @click="view = 'new-ticket'; errors = {}" class="bg-[#0F172A] text-white px-4 py-2 rounded-xl font-black text-xs flex items-center gap-2 hover:bg-sky-600 shadow-md active:scale-95">
+                    <button @click="view = 'new-ticket'; errors = {}; activeStep = 'user-info'" class="bg-[#0F172A] text-white px-4 py-2 rounded-xl font-black text-xs flex items-center gap-2 hover:bg-sky-600 transition-all active:scale-95 shadow-md">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span class="hidden sm:inline" x-text="t().openTicket"></span>
                     </button>
@@ -385,44 +409,90 @@
 
     <main class="max-w-6xl mx-auto px-6 py-8 lg:px-8 text-start">
         
-        <!-- HOME -->
+        <!-- HOME (Hero Section) -->
         <div x-show="view === 'home'" class="animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            <div class="relative rounded-[2.5rem] p-8 md:p-16 overflow-hidden mb-12 shadow-xl bg-[#0F172A]">
+            <div class="relative rounded-[2.5rem] p-8 md:p-12 overflow-hidden mb-12 shadow-xl bg-[#0F172A]">
                 <div class="absolute inset-0 opacity-10">
                     <div :class="lang === 'ar' ? 'right-0' : 'left-0'" class="absolute top-0 w-[400px] h-[400px] bg-sky-600 rounded-full blur-[120px] -mr-32 -mt-32"></div>
                 </div>
-                <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+                <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
                     <div class="max-w-xl text-center lg:text-start" :class="lang === 'ar' ? 'lg:text-right' : 'lg:text-left'">
-                        <div class="inline-flex items-center gap-2 bg-sky-600/10 backdrop-blur-md border border-sky-600/20 text-sky-400 px-4 py-1.5 rounded-full text-[10px] font-black mb-8 uppercase tracking-[2px]">
+                        <div class="inline-flex items-center gap-2 bg-sky-600/10 backdrop-blur-md border border-sky-600/20 text-sky-400 px-4 py-1.5 rounded-full text-[10px] font-black mb-6 uppercase tracking-wider">
                             <i data-lucide="zap" class="w-3.5 h-3.5"></i> <span x-text="t().maintenanceReady"></span>
                         </div>
-                        <h2 class="text-4xl md:text-5xl font-black text-white mb-8 leading-[1.1] tracking-tight">
+                        <h2 class="text-4xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight">
                             <span x-text="t().heroTitle.split('..')[0]"></span> <br />
                             <span class="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent" x-text="t().heroTitle.split('..')[1]"></span>
                         </h2>
-                        <p class="text-slate-400 text-lg md:text-xl mb-10 leading-relaxed font-medium opacity-80" x-text="t().heroDesc"></p>
+                        <p class="text-slate-400 text-lg mb-8 leading-relaxed font-medium opacity-80" x-text="t().heroDesc"></p>
                         <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
-                            <button @click="view = 'new-ticket'" class="bg-white text-[#0F172A] px-10 py-4 rounded-2xl font-black text-lg hover:bg-sky-600 hover:text-white transition-all shadow-lg active:scale-95" x-text="t().openTicket"></button>
-                            <button @click="view = 'my-tickets'" class="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black text-lg hover:bg-slate-700 transition-all border border-slate-700 active:scale-95" x-text="t().viewMyOrders"></button>
+                            <button @click="view = 'new-ticket'; errors = {}; activeStep = 'user-info'" class="bg-white text-[#0F172A] px-10 py-3.5 rounded-2xl font-black text-lg hover:bg-sky-600 hover:text-white transition-all shadow-lg active:scale-95" x-text="t().openTicket"></button>
+                            <button @click="view = 'my-tickets'" class="bg-slate-800 text-white px-10 py-3.5 rounded-2xl font-black text-lg hover:bg-slate-700 transition-all border border-slate-700 active:scale-95" x-text="t().viewMyOrders"></button>
                         </div>
                     </div>
-                    <!-- ILLUSTRATION IMAGE PATH LOADED FROM CONFIG -->
-                    <div class="w-full max-w-[400px] relative cursor-pointer" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
-                        <img :src="CONFIG.brand.heroIllustration" alt="Support Illustration" class="w-full h-auto transition-transform duration-700" :class="isHovered ? 'scale-105 rotate-1' : ''">
+                    
+                    <!-- NEW: Interactive SVG "Core of Stability" -->
+                    <div class="w-full max-w-[400px] relative cursor-pointer group" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+                        <svg viewBox="0 0 500 500" class="w-full h-full drop-shadow-2xl overflow-visible transition-transform duration-700" :class="isHovered ? 'scale-105' : ''">
+                            <defs>
+                                <linearGradient id="paradiseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+                                </linearGradient>
+                                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="15" result="coloredBlur" />
+                                    <feMerge>
+                                        <feMergeNode in="coloredBlur" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                            </defs>
+
+                            <!-- Background Orbiting Rings (Faster on hover) -->
+                            <g class="orbit-slow origin-center transition-all duration-1000" :style="isHovered ? 'animation-duration: 8s;' : ''">
+                                <circle cx="250" cy="250" r="200" fill="none" stroke="#0ea5e9" stroke-width="2" opacity="0.3" stroke-dasharray="50 150" />
+                                <circle cx="250" cy="250" r="180" fill="none" stroke="#10b981" stroke-width="2" opacity="0.2" stroke-dasharray="100 200" transform="rotate(45 250 250)"/>
+                            </g>
+
+                            <!-- Central Core Structure -->
+                            <g transform="translate(250, 250)" :class="isHovered ? 'pulse' : ''">
+                                <!-- Base Pedestal -->
+                                <path d="M-80 180 L80 180 L60 220 L-60 220 Z" fill="#1e293b" stroke="url(#paradiseGrad)" stroke-width="4" class="transition-all duration-500" :style="isHovered ? 'filter: url(#glow);' : ''" />
+                                
+                                <!-- Core Shield/Structure -->
+                                <g transform="translate(0, -20)">
+                                    <path d="M0 -140 L100 -60 L100 60 L0 140 L-100 60 L-100 -60 Z" fill="url(#paradiseGrad)" opacity="0.8" class="transition-all duration-700" :style="isHovered ? 'opacity: 1; filter: url(#glow);' : ''" />
+                                    <path d="M0 -120 L80 -50 L80 50 L0 120 L-80 50 L-80 -50 Z" fill="#0f172a" stroke="url(#paradiseGrad)" stroke-width="4" />
+                                    
+                                    <!-- Inner "AI" Icon -->
+                                    <circle cx="0" cy="0" r="30" fill="url(#paradiseGrad)" class="pulse" />
+                                    <path d="M-10 -15 L10 -15 M0 -15 L0 15 M-10 15 L10 15" stroke="#0f172a" stroke-width="6" stroke-linecap="round" />
+                                </g>
+                            </g>
+
+                            <!-- Active Data Points (Orbiting faster on hover) -->
+                            <g class="orbit-medium origin-center transition-all duration-700" :style="isHovered ? 'animation-duration: 4s;' : ''">
+                                <circle cx="250" cy="50" r="8" fill="#10b981" filter="url(#glow)" />
+                                <circle cx="250" cy="450" r="8" fill="#0ea5e9" filter="url(#glow)" />
+                            </g>
+                             <g class="orbit-fast origin-center transition-all duration-700" :style="isHovered ? 'animation-duration: 3s;' : ''" transform="rotate(90 250 250)">
+                                <circle cx="450" cy="250" r="6" fill="#f59e0b" filter="url(#glow)" />
+                            </g>
+                        </svg>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- MY TICKETS -->
+        <!-- MY TICKETS / OPERATIONS LOG -->
         <div x-show="view === 'my-tickets'" class="animate-in fade-in duration-700" x-cloak>
-            <div x-show="!isAuthenticated" class="max-w-lg mx-auto mt-8">
-                <div class="bg-white p-8 lg:p-12 rounded-[2.5rem] shadow-xl border border-slate-50 text-center relative overflow-hidden">
-                    <div class="w-20 h-20 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-                        <i data-lucide="shield-check" class="w-10 h-10"></i>
+            <div x-show="!isAuthenticated" class="max-w-md mx-auto mt-12">
+                <div class="bg-white p-8 lg:p-10 rounded-[2rem] shadow-xl border border-slate-50 text-center relative overflow-hidden">
+                    <div class="w-16 h-16 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i data-lucide="shield-check" class="w-8 h-8"></i>
                     </div>
-                    <h2 class="text-3xl font-black text-slate-900 mb-4" x-text="t().quickAccess"></h2>
-                    <p class="text-slate-500 mb-8 text-base leading-relaxed font-medium" x-text="t().accessDesc"></p>
+                    <h2 class="text-2xl font-black text-slate-900 mb-2" x-text="t().quickAccess"></h2>
+                    <p class="text-slate-500 mb-8 text-sm font-medium" x-text="t().accessDesc"></p>
                     <form @submit.prevent="handleAccess" class="space-y-6 text-start">
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" x-text="t().email"></label>
@@ -433,41 +503,50 @@
                                        :class="errors.accessEmail ? 'border-red-500' : 'border-transparent'" :style="lang === 'ar' ? 'padding-right: 3rem' : 'padding-left: 3rem'">
                             </div>
                             <p x-show="errors.accessEmail" class="text-red-500 text-[10px] font-bold px-1" x-text="errors.accessEmail"></p>
-                            <div class="flex items-start gap-2 text-[9px] md:text-[10px] font-bold text-slate-400 mt-4 px-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                <i data-lucide="info" class="w-3.5 h-3.5 text-sky-500 shrink-0"></i>
+                            <div class="flex items-start gap-2 text-[9px] font-bold text-slate-400 mt-4 px-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <i data-lucide="info" class="w-3 h-3 text-sky-500 shrink-0"></i>
                                 <span x-text="t().emailNote"></span>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-[#0F172A] text-white py-5 rounded-xl font-black text-xl hover:bg-sky-600 shadow-lg active:scale-95" x-text="t().accessBtn"></button>
+                        <button type="submit" class="w-full bg-[#0F172A] text-white py-4 rounded-xl font-black text-lg hover:bg-sky-600 transition-all active:scale-95 shadow-md" x-text="t().accessBtn"></button>
                     </form>
                 </div>
             </div>
 
             <div x-show="isAuthenticated" class="space-y-8">
-                <h2 class="text-4xl font-black text-slate-900 mb-2 tracking-tight text-start" x-text="t().myTickets"></h2>
-                
-                <div x-show="userTickets().length === 0" class="max-w-3xl mx-auto py-16 px-8 text-center bg-white rounded-[3rem] shadow-sm border border-slate-100">
-                    <img :src="CONFIG.brand.emptyStateImg" alt="Empty" class="w-64 h-auto mx-auto mb-8 drop-shadow-xl animate-bounce-slow">
-                    <h3 class="text-3xl font-black text-slate-900 mb-4 tracking-tight" x-text="t().noTicketsTitle"></h3>
-                    <p class="text-slate-500 text-lg leading-relaxed max-w-xl mx-auto mb-10 font-medium" x-text="t().noTicketsDesc"></p>
-                    <button @click="view = 'new-ticket'" class="bg-sky-600 text-white px-12 py-4 rounded-2xl font-black text-lg hover:bg-slate-900 shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+                    <div class="text-start">
+                        <h2 class="text-4xl font-black text-slate-900 mb-2 tracking-tight" x-text="t().myTickets"></h2>
+                        <p class="text-slate-400 text-sm font-bold flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm w-fit">
+                            <i data-lucide="mail" class="w-4 h-4 text-sky-500"></i> <span x-text="userEmail"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Empty State (Shows CONFIG path image) -->
+                <div x-show="userTickets().length === 0" class="max-w-2xl mx-auto py-16 px-8 text-center bg-white rounded-[2.5rem] shadow-sm border border-slate-100 animate-in zoom-in duration-500">
+                    <img :src="CONFIG.brand.emptyStateImg" alt="No records" class="w-64 h-auto mx-auto mb-8 drop-shadow-xl opacity-90 animate-bounce-slow">
+                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight" x-text="t().noTicketsTitle"></h3>
+                    <p class="text-slate-500 text-base leading-relaxed max-w-md mx-auto mb-8 font-medium" x-text="t().noTicketsDesc"></p>
+                    <button @click="view = 'new-ticket'; errors = {}; activeStep = 'user-info'" class="bg-sky-600 text-white px-10 py-3.5 rounded-xl font-black text-lg hover:bg-slate-900 shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> <span x-text="t().openTicket"></span>
                     </button>
                 </div>
 
-                <div x-show="userTickets().length > 0" class="grid grid-cols-1 gap-4">
+                <!-- Tickets Grid -->
+                <div x-show="userTickets().length > 0" class="grid grid-cols-1 gap-4 text-start">
                     <template x-for="ticket in userTickets()" :key="ticket.id">
-                        <div @click="openDetails(ticket)" class="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-50 hover:border-sky-100 hover:shadow-lg transition-all group cursor-pointer text-start">
+                        <div @click="openDetails(ticket)" class="bg-white p-6 rounded-[2rem] border border-slate-50 hover:border-sky-100 hover:shadow-lg transition-all group cursor-pointer">
                             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-3 mb-4">
-                                        <span class="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[1px]" x-text="ticket.id"></span>
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-bold border" :class="statusStyles(ticket.status)" x-text="t()['status' + ticket.status.replace(/\s+/g, '')]"></span>
+                                        <span class="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest" x-text="ticket.id"></span>
+                                        <span class="px-3 py-1 rounded-full text-[9px] font-bold border" :class="statusStyles(ticket.status)" x-text="t()['status' + ticket.status.replace(/\s+/g, '')]"></span>
                                     </div>
-                                    <h4 class="text-xl font-black text-slate-800 group-hover:text-sky-600 transition-colors mb-4" x-text="ticket.subject"></h4>
-                                    <div class="flex flex-wrap gap-8 text-xs text-slate-400 font-bold">
-                                        <span class="flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-500"></i> <span x-text="ticket.projectName"></span></span>
-                                        <span class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-orange-500"></i> <span x-text="ticket.lastUpdate"></span></span>
+                                    <h4 class="text-xl font-black text-slate-800 group-hover:text-sky-600 transition-colors mb-3" x-text="ticket.subject"></h4>
+                                    <div class="flex flex-wrap gap-8 text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                                        <span class="flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-sky-500"></i> <span x-text="ticket.projectName"></span></span>
+                                        <span class="flex items-center gap-2"><i data-lucide="clock" class="w-3.5 h-3.5 text-orange-500"></i> <span x-text="ticket.lastUpdate"></span></span>
                                     </div>
                                 </div>
                                 <div class="w-12 h-12 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition-all shadow-inner shrink-0">
@@ -480,17 +559,18 @@
             </div>
         </div>
 
-        <!-- NEW TICKET -->
+        <!-- NEW TICKET FORM -->
         <div x-show="view === 'new-ticket'" class="max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-700" x-cloak>
-            <div class="flex items-center gap-6 mb-8">
+            <div class="flex items-center gap-6 mb-8 text-start">
                 <button @click="view = 'home'" class="w-10 h-10 bg-white flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-sky-600 shadow-sm transition-all"><i :data-lucide="lang === 'ar' ? 'arrow-right' : 'arrow-left'" class="w-5 h-5"></i></button>
                 <h2 class="text-3xl font-black text-slate-900 tracking-tight" x-text="t().newTicketTitle"></h2>
             </div>
             <div class="bg-white rounded-[2rem] shadow-xl border border-slate-50 overflow-hidden text-start">
+                <!-- Stepper -->
                 <div class="flex border-b text-center bg-slate-50/30">
                     <template x-for="step in steps" :key="step.id">
                         <button @click="if(validateStep(activeStep)) activeStep = step.id; updateIcons()" 
-                                class="flex-1 py-5 font-black text-xs md:text-sm flex items-center justify-center gap-2"
+                                class="flex-1 py-4 font-black text-xs flex items-center justify-center gap-2"
                                 :class="activeStep === step.id ? 'text-sky-600 bg-white border-b-4 border-sky-600' : 'text-slate-400 hover:bg-slate-100'">
                             <i :data-lucide="step.icon" class="w-4 h-4"></i> <span x-text="t()[step.labelKey]"></span>
                         </button>
@@ -498,66 +578,40 @@
                 </div>
                 <div class="p-8 lg:p-12">
                     <form @submit.prevent="submitTicket" class="space-y-8">
-                        <!-- Step 1 -->
                         <div x-show="activeStep === 'user-info'" class="space-y-6 animate-in fade-in duration-500">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="space-y-2">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" x-text="t().projectName"></label>
-                                    <input type="text" x-model="newTicket.projectName" class="w-full px-5 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.projectName ? 'border-red-500' : 'border-transparent'">
+                                    <input type="text" x-model="newTicket.projectName" class="w-full px-5 py-3.5 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold text-sm shadow-sm" :class="errors.projectName ? 'border-red-500' : 'border-transparent'">
                                     <p x-show="errors.projectName" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.projectName"></p>
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" x-text="t().email"></label>
-                                    <input type="email" x-model="newTicket.email" class="w-full px-5 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.email ? 'border-red-500' : 'border-transparent'">
+                                    <input type="email" x-model="newTicket.email" class="w-full px-5 py-3.5 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold text-sm shadow-sm" :class="errors.email ? 'border-red-500' : 'border-transparent'">
                                     <p x-show="errors.email" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.email"></p>
-                                    <p class="text-[9px] font-bold text-slate-400 flex items-center gap-1.5 px-1"><i data-lucide="info" class="w-3 h-3 text-sky-500"></i> <span x-text="t().emailNote"></span></p>
                                 </div>
                                 <div class="md:col-span-2 space-y-2">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" x-text="t().phone"></label>
-                                    <input type="tel" x-model="newTicket.phone" class="w-full px-5 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.phone ? 'border-red-500' : 'border-transparent'" :placeholder="t().phonePlaceholder">
+                                    <input type="tel" x-model="newTicket.phone" class="w-full px-5 py-3.5 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold text-sm shadow-sm" :class="errors.phone ? 'border-red-500' : 'border-transparent'" :placeholder="t().phonePlaceholder">
                                     <p x-show="errors.phone" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.phone"></p>
                                 </div>
                             </div>
                         </div>
-                        <!-- Step 2 -->
                         <div x-show="activeStep === 'details'" class="space-y-6 animate-in fade-in duration-500">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="md:col-span-2 space-y-2">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="t().subject"></label>
-                                    <input type="text" x-model="newTicket.subject" class="w-full px-6 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.subject ? 'border-red-500' : 'border-transparent'">
-                                    <p x-show="errors.subject" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.subject"></p>
+                                    <input type="text" x-model="newTicket.subject" class="w-full px-5 py-3.5 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.subject ? 'border-red-500' : 'border-transparent'">
                                 </div>
-                                <div class="space-y-2"><label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="t().module"></label><select x-model="newTicket.module" class="w-full px-6 py-4 bg-slate-50 rounded-xl font-bold outline-none border-2 border-transparent focus:border-sky-500 shadow-sm"><option value="Finance">Finance</option><option value="HR">HR</option><option value="SCM">SCM</option><option value="CRM">CRM</option></select></div>
-                                <div class="space-y-2"><label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="t().priority"></label><select x-model="newTicket.priority" class="w-full px-6 py-4 bg-slate-50 rounded-xl font-bold border-transparent focus:border-sky-500 shadow-sm"><option value="Low" x-text="t().prioLow"></option><option value="Medium" x-text="t().prioMed"></option><option value="High" x-text="t().prioHigh"></option><option value="Critical" x-text="t().prioCrit"></option></select></div>
-                                <div class="md:col-span-2 space-y-2">
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="t().procedure"></label>
-                                    <input type="text" x-model="newTicket.procedure" class="w-full px-6 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-bold shadow-sm" :class="errors.procedure ? 'border-red-500' : 'border-transparent'" :placeholder="lang === 'ar' ? 'مثلاً: شاشة ترحيل القيود' : 'e.g., Ledger Screen'">
-                                    <p x-show="errors.procedure" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.procedure"></p>
-                                </div>
+                                <div class="space-y-2"><label class="block text-[10px] font-black text-slate-400 uppercase" x-text="t().module"></label><select x-model="newTicket.module" class="w-full px-5 py-3.5 bg-slate-50 rounded-xl font-bold text-sm shadow-sm border-0"><option value="Finance">Finance</option><option value="HR">HR</option><option value="SCM">SCM</option></select></div>
+                                <div class="space-y-2"><label class="block text-[10px] font-black text-slate-400 uppercase" x-text="t().priority"></label><select x-model="newTicket.priority" class="w-full px-5 py-3.5 bg-slate-50 rounded-xl font-bold text-sm shadow-sm border-0"><option value="Low" x-text="t().prioLow"></option><option value="Medium" x-text="t().prioMed"></option><option value="High" x-text="t().prioHigh"></option></select></div>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest" x-text="t().desc"></label>
-                                <textarea rows="5" x-model="newTicket.description" class="w-full px-6 py-5 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-2xl font-medium shadow-sm resize-none text-base" :class="errors.description ? 'border-red-500' : 'border-transparent'"></textarea>
-                                <p x-show="errors.description" class="text-red-500 text-[9px] font-bold px-1" x-text="errors.description"></p>
+                                <textarea rows="4" x-model="newTicket.description" class="w-full px-5 py-4 bg-slate-50 border-2 focus:bg-white focus:border-sky-500 rounded-xl font-medium shadow-sm resize-none text-sm" :class="errors.description ? 'border-red-500' : 'border-transparent'"></textarea>
                             </div>
                         </div>
-                        <!-- Step 3 -->
-                        <div x-show="activeStep === 'attachments'" class="text-center py-6 animate-in zoom-in duration-300">
-                            <div class="bg-slate-50 border-2 border-dashed border-slate-100 rounded-3xl p-16 group hover:border-sky-300 transition-all cursor-pointer relative shadow-inner">
-                                <input type="file" multiple class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFiles($event)">
-                                <div class="w-20 h-20 bg-white text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl group-hover:scale-110 transition-transform"><i data-lucide="upload-cloud" class="w-10 h-10"></i></div>
-                                <h4 class="text-2xl font-black text-slate-800 mb-2" x-text="lang === 'ar' ? 'ارفع وثائقك الفنية' : 'Upload Docs'"></h4>
-                            </div>
-                            <div x-show="newTicket.attachments.length > 0" class="mt-6 grid grid-cols-1 gap-3">
-                                <template x-for="(file, index) in newTicket.attachments" :key="index">
-                                    <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
-                                        <div class="flex items-center gap-2"><i data-lucide="file" class="w-3.5 h-3.5 text-sky-500"></i><span class="text-xs font-bold truncate max-w-[200px]" x-text="file.name"></span></div>
-                                        <button type="button" @click="newTicket.attachments.splice(index, 1)" class="text-slate-300 hover:text-red-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                        <button type="button" @click="handleNext()" class="w-full bg-[#0F172A] text-white py-6 rounded-2xl font-black text-xl hover:bg-sky-600 shadow-lg transition-all active:scale-95 flex items-center justify-center gap-4">
+                        <button type="button" @click="handleNext()" class="w-full bg-[#0F172A] text-white py-4 rounded-xl font-black text-lg hover:bg-sky-600 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3">
                             <span x-text="activeStep === 'attachments' ? t().submit : t().next"></span>
                         </button>
                     </form>
@@ -565,65 +619,61 @@
             </div>
         </div>
 
-        <!-- TRACK -->
-        <div x-show="view === 'track-ticket'" class="max-w-3xl mx-auto animate-in zoom-in duration-500 text-center" x-cloak>
-            <div class="w-20 h-20 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner"><i data-lucide="search" class="w-10 h-10"></i></div>
-            <h2 class="text-4xl font-black text-slate-900 mb-4" x-text="t().track"></h2>
-            <div class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-50">
+        <!-- TRACK / SEARCH -->
+        <div x-show="view === 'track-ticket'" class="max-w-2xl mx-auto animate-in zoom-in duration-500 text-center" x-cloak>
+            <div class="w-16 h-16 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner"><i data-lucide="search" class="w-8 h-8"></i></div>
+            <h2 class="text-3xl font-black text-slate-900 mb-4" x-text="t().track"></h2>
+            <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-50">
                 <div class="flex flex-col md:flex-row gap-4">
-                    <input type="text" x-model="searchId" placeholder="PRD-XXXX" class="flex-1 px-8 py-5 bg-slate-50 border-2 focus:bg-white rounded-xl text-2xl font-black uppercase text-center outline-none">
-                    <button @click="handleTrackSearch()" class="bg-[#0F172A] text-white px-10 py-5 rounded-xl font-black text-xl hover:bg-sky-600 shadow-lg transition-all" x-text="lang === 'ar' ? 'تحديث' : 'Update'"></button>
+                    <input type="text" x-model="searchId" placeholder="PRD-XXXX" class="flex-1 px-6 py-4 bg-slate-50 border-2 focus:bg-white rounded-xl text-xl font-black uppercase text-center outline-none">
+                    <button @click="handleTrackSearch()" class="bg-[#0F172A] text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-sky-600 transition-all shadow-md" x-text="lang === 'ar' ? 'تحديث' : 'Update'"></button>
                 </div>
             </div>
         </div>
 
-        <!-- DETAILS -->
+        <!-- DETAILS VIEW -->
         <div x-show="view === 'ticket-details'" class="max-w-5xl mx-auto animate-in slide-in-from-left duration-700 text-start" x-cloak>
-            <div class="flex items-center gap-6 mb-8">
-                <button @click="view = 'my-tickets'" class="w-10 h-10 bg-white flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-sky-600 shadow-sm transition-all"><i :data-lucide="lang === 'ar' ? 'arrow-right' : 'arrow-left'" class="w-5 h-5"></i></button>
+            <div class="flex items-center gap-4 mb-8">
+                <button @click="view = 'my-tickets'; errors = {}" class="w-10 h-10 bg-white flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-sky-600 shadow-sm transition-all"><i :data-lucide="lang === 'ar' ? 'arrow-right' : 'arrow-left'" class="w-5 h-5"></i></button>
                 <div x-show="selectedTicket">
-                   <div class="flex items-center gap-3 mb-2"><span class="text-red-600 font-black text-xs uppercase" x-text="selectedTicket?.id"></span><span class="px-3 py-1 rounded-full text-[9px] font-bold border" :class="statusStyles(selectedTicket?.status || 'Open')" x-text="selectedTicket ? t()['status' + selectedTicket.status.replace(/\s+/g, '')] : ''"></span></div>
-                   <h2 class="text-3xl font-black text-slate-900" x-text="selectedTicket?.subject"></h2>
+                   <h2 class="text-2xl font-black text-slate-900" x-text="selectedTicket?.subject"></h2>
                 </div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div class="lg:col-span-8 space-y-8">
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-                        <h3 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-3 border-b pb-6"><i data-lucide="info" class="w-5 h-5 text-red-500"></i> <span x-text="t().details"></span></h3>
-                        <p class="text-slate-600 leading-relaxed text-lg italic" x-text="selectedTicket?.description"></p>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6 text-start">
+                    <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                        <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-3 border-b pb-4"><i data-lucide="info" class="w-4 h-4 text-red-500"></i> <span x-text="t().details"></span></h3>
+                        <p class="text-slate-600 leading-relaxed text-base italic" x-text="selectedTicket?.description"></p>
                     </div>
                 </div>
-                <div class="lg:col-span-4">
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                        <h4 class="font-black text-lg mb-4 border-b pb-4" x-text="lang === 'ar' ? 'بيانات الطلب' : 'Request Info'"></h4>
-                        <div class="space-y-3 text-xs">
-                            <p><span class="text-slate-400 font-bold uppercase block mb-1" x-text="t().projectName"></span> <span class="font-black text-slate-800" x-text="selectedTicket?.projectName"></span></p>
-                            <p><span class="text-slate-400 font-bold uppercase block mb-1" x-text="t().email"></span> <span class="font-black text-slate-800" x-text="selectedTicket?.email"></span></p>
-                            <p><span class="text-slate-400 font-bold uppercase block mb-1" x-text="t().phone"></span> <span class="font-black text-slate-800" x-text="selectedTicket?.phone"></span></p>
-                        </div>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                    <h4 class="font-black text-base mb-4 border-b pb-4 uppercase tracking-wider" x-text="lang === 'ar' ? 'بيانات الطلب' : 'Request Info'"></h4>
+                    <div class="space-y-4 text-[11px] font-medium uppercase tracking-tight">
+                        <p><span class="text-slate-400 block mb-1" x-text="t().projectName"></span> <span class="text-slate-800 font-black" x-text="selectedTicket?.projectName"></span></p>
+                        <p><span class="text-slate-400 block mb-1" x-text="t().email"></span> <span class="text-slate-800 font-black" x-text="selectedTicket?.email"></span></p>
+                        <p><span class="text-slate-400 block mb-1" x-text="t().phone"></span> <span class="text-slate-800 font-black" x-text="selectedTicket?.phone"></span></p>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="bg-white border-t border-slate-50 py-16 px-6 text-center">
-        <div class="max-w-6xl mx-auto flex flex-col items-center gap-8">
-            <img :src="CONFIG.brand.logoUrl" alt="Logo" class="h-10 w-auto">
-            <p class="text-slate-300 text-[10px] font-bold uppercase tracking-[2px]">© 2026 Paradise AI Company.
-
-Think positive, think services..</p>
+    <footer class="bg-white border-t border-slate-50 py-12 px-6 text-center">
+        <div class="max-w-6xl mx-auto flex flex-col items-center gap-6">
+            <img :src="CONFIG.brand.logoUrl" alt="Paradise AI" class="h-10 w-auto">
+            <p class="text-slate-300 text-[10px] font-bold uppercase tracking-[2px]">© 2024 Paradise AI Solutions. Engineering Global Tech Stability.</p>
         </div>
     </footer>
 
-    <button @click="view = 'new-ticket'; errors = {}; activeStep = 'user-info';" class="fixed bottom-10 w-16 h-16 bg-red-600 text-white rounded-3xl flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-[#0F172A] transition-all group z-40" :class="lang === 'ar' ? 'left-8' : 'right-8'">
-        <i data-lucide="wrench" class="w-7 h-7 group-hover:rotate-45 transition-transform duration-700"></i>
+    <!-- FAB (Reduced Size) -->
+    <button @click="view = 'new-ticket'; errors = {}; activeStep = 'user-info';" class="fixed bottom-8 w-14 h-14 bg-red-600 text-white rounded-2xl flex items-center justify-center shadow-xl hover:scale-110 hover:bg-[#0F172A] transition-all group z-40" :class="lang === 'ar' ? 'left-6' : 'right-6'">
+        <i data-lucide="wrench" class="w-6 h-6 group-hover:rotate-45 transition-transform duration-700"></i>
     </button>
 
     <!-- Notification Toast -->
-    <div x-show="showNotification" x-cloak class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] bg-[#0F172A] text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-4 border border-white/10 ring-4 ring-red-500/10 animate-in slide-in-from-top-10">
-        <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg"><i data-lucide="check-circle-2" class="w-6 h-6"></i></div>
-        <span class="font-black text-xl tracking-tight" x-text="notifMessage"></span>
+    <div x-show="showNotification" x-cloak class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-[#0F172A] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10 ring-4 ring-sky-500/10 animate-in slide-in-from-top-10">
+        <div class="w-8 h-8 bg-sky-600 rounded-full flex items-center justify-center"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+        <span class="font-black text-base" x-text="notifMessage"></span>
     </div>
 
 </body>
